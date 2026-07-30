@@ -1,0 +1,28 @@
+# Binaries and test outputs
+galerapagos
+*.exe
+*.exe~
+*.test
+*.out
+
+# Coverage files
+coverage.txt
+coverage.html
+
+# Vendor directory
+/vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
