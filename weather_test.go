@@ -8,68 +8,70 @@ import (
 
 func TestNewWeather(t *testing.T) {
 	weather := newWeather()
-	assert.Equal(t, sunny, weather.weather)
+	assert.Equal(t, sunny, weather.state)
 	assert.Equal(t, 0, weather.nbOfDays)
 }
 
 func TestWeatherChangeFromSunnyToStormy(t *testing.T) {
 	weather := newWeather()
 	weather.applyWeatherChange(0)
-	assert.Equal(t, stormy, weather.weather)
+	assert.Equal(t, stormy, weather.state)
 	assert.Equal(t, 0, weather.nbOfDays)
 }
 
 func TestWeatherChangeFromSunnyToCloudy(t *testing.T) {
 	weather := newWeather()
 	weather.applyWeatherChange(100)
-	assert.Equal(t, cloudy, weather.weather)
+	assert.Equal(t, cloudy, weather.state)
 	assert.Equal(t, 0, weather.nbOfDays)
 }
 func TestWeatherChangeFromCloudyToRainy(t *testing.T) {
 	weather := newWeather()
-	weather.weather = cloudy
+	weather.state = cloudy
 	weather.applyWeatherChange(100)
-	assert.Equal(t, rainy, weather.weather)
+	assert.Equal(t, rainy, weather.state)
 	assert.Equal(t, 0, weather.nbOfDays)
 }
 
 func TestWeatherChangeFromStormyToSunny(t *testing.T) {
 	weather := newWeather()
-	weather.weather = stormy
+	weather.state = stormy
 	weather.applyWeatherChange(100)
-	assert.Equal(t, sunny, weather.weather)
+	assert.Equal(t, sunny, weather.state)
 	assert.Equal(t, 0, weather.nbOfDays)
 }
 
 func TestWeatherString(t *testing.T) {
 	weather := newWeather()
-	assert.Equal(t, weather.weatherAsString(), "sunny")
-	weather.weather = cloudy
-	assert.Equal(t, weather.weatherAsString(), "cloudy")
-	weather.weather = rainy
-	assert.Equal(t, weather.weatherAsString(), "rainy")
-	weather.weather = stormy
-	assert.Equal(t, weather.weatherAsString(), "stormy")
-	weather.weather = -1
-	assert.Equal(t, weather.weatherAsString(), "unknown")
+	assert.Equal(t, "sunny", weather.state.String())
+	weather.state = cloudy
+	assert.Equal(t, "cloudy", weather.state.String())
+	weather.state = rainy
+	assert.Equal(t, "rainy", weather.state.String())
+	weather.state = stormy
+	assert.Equal(t, "stormy", weather.state.String())
+	weather.state = -1
+	assert.Equal(t, "unknown", weather.state.String())
+	weather.state = numWeathers
+	assert.Equal(t, "unknown", weather.state.String())
 }
 
 func TestStormyWeatherHinderFoodGathering(t *testing.T) {
 	weather := newWeather()
-	weather.weather = stormy
+	weather.state = stormy
 	assert.Less(t, weather.foodGatheringBonus(), 0)
 }
 
 func TestSunnyWeatherBoostFoodGathering(t *testing.T) {
 	weather := newWeather()
-	weather.weather = sunny
+	weather.state = sunny
 	assert.Greater(t, weather.foodGatheringBonus(), 0)
 }
 
 func TestCloudyAndRainyWeatherDoNotBoostFoodGathering(t *testing.T) {
 	weather := newWeather()
-	weather.weather = cloudy
+	weather.state = cloudy
 	assert.Equal(t, weather.foodGatheringBonus(), 0)
-	weather.weather = rainy
+	weather.state = rainy
 	assert.Equal(t, weather.foodGatheringBonus(), 0)
 }

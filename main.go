@@ -16,8 +16,8 @@ func main() {
 		_, _ = reader.ReadString('\n')
 	}
 	if game.successfulEscape {
-		fmt.Println("You win, you manage to save", len(game.players), "persons in ", game.dayCount, "days.")
+		fmt.Fprintln(game.writer, "You win, you manage to save", len(game.players), "persons in ", game.dayCount, "days.")
 	} else {
-		fmt.Println("You lose, everybody died after ", game.dayCount, "days.")
+		fmt.Fprintln(game.writer, "You lose, everybody died after ", game.dayCount, "days.")
 	}
 }

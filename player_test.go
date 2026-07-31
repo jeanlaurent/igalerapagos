@@ -53,13 +53,13 @@ func TestPlayeAfterMissing2LunchesEatAgain(t *testing.T) {
 	assert.Equal(t, player.foodStatus, fed)
 }
 
-func TestFoodStatusAsString(t *testing.T) {
+func TestFoodStatusString(t *testing.T) {
 	player := newPlayer(1)
-	assert.Equal(t, player.getFoodStatusAsString(), "fed")
+	assert.Equal(t, "fed", player.foodStatus.String())
 	player.foodStatus = hungry
-	assert.Equal(t, player.getFoodStatusAsString(), "hungry")
+	assert.Equal(t, "hungry", player.foodStatus.String())
 	player.foodStatus = starving
-	assert.Equal(t, player.getFoodStatusAsString(), "starving")
+	assert.Equal(t, "starving", player.foodStatus.String())
 	player.foodStatus = -1
-	assert.Equal(t, player.getFoodStatusAsString(), "unknown")
+	assert.Equal(t, "unknown", player.foodStatus.String())
 }

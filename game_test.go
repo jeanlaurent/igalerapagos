@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"io"
+	"math/rand/v2"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -32,6 +35,7 @@ func TestDayCountStartAt0(t *testing.T) {
 
 func TestWhenDayPassDayCountProgress(t *testing.T) {
 	game := newGame(12)
+	game.writer = io.Discard
 	game.runDay()
 	assert.Equal(t, 1, game.dayCount)
 	game.runDay()
@@ -42,6 +46,7 @@ func TestWhenDayPassDayCountProgress(t *testing.T) {
 
 func TestWhenDayPassDayFoodGetsDown(t *testing.T) {
 	game := newGame(12)
+	game.writer = io.Discard
 	game.foodStock = 14
 	game.runLunchPhase()
 	assert.Equal(t, 2, game.foodStock)
@@ -49,6 +54,7 @@ func TestWhenDayPassDayFoodGetsDown(t *testing.T) {
 
 func TestWhenFoodStockCantBeNegative(t *testing.T) {
 	game := newGame(12)
+	game.writer = io.Discard
 	game.foodStock = 0
 	game.runLunchPhase()
 	assert.Equal(t, 0, game.foodStock)
@@ -57,6 +63,7 @@ func TestWhenFoodStockCantBeNegative(t *testing.T) {
 func TestEverybodyGotToBeHungry(t *testing.T) {
 	playerCount := 12
 	game := newGame(playerCount)
+	game.writer = io.Discard
 	game.foodStock = 0
 	game.runLunchPhase()
 	for _, player := range game.players {
@@ -135,6 +142,7 @@ func TestKillPlayerOn(t *testing.T) {
 // never consumed.
 func TestCampfireConsumesWoodWhenPlentiful(t *testing.T) {
 	game := newGame(4)
+	game.writer = io.Discard
 	game.woodStock = 100
 	// dice.roll(6) returns 3, so firepower = 3 + 1 = 4
 	game.dice = &DiceStub{[]int{3}, 0}
@@ -152,6 +160,7 @@ func TestCampfireConsumesWoodWhenPlentiful(t *testing.T) {
 func testActionDispatch(t *testing.T, actionRoll int) {
 	t.Helper()
 	game := newGame(1)
+	game.writer = io.Discard
 	// Use woodStock=100 so any accidental camp routing is clearly visible.
 	game.woodStock = 100
 	game.foodStock = 0
@@ -179,4 +188,39 @@ func TestActionPhaseRoll33GoesToFood(t *testing.T) {
 // so it fell through to the camp (else) bucket.
 func TestActionPhaseRoll66GoesToFood(t *testing.T) {
 	testActionDispatch(t, 66)
+}
+
+// --- io.Writer: output assertion ---
+
+// TestGameOutputContainsDayHeader verifies that game output is routed through
+// the injected io.Writer: running runDay should produce a line beginning with
+// "Start of day 1".
+func TestGameOutputContainsDayHeader(t *testing.T) {
+	buf := &bytes.Buffer{}
+	game := newGame(4)
+	game.writer = buf
+	game.dice = newDiceWithSource(rand.NewPCG(1, 0))
+	game.runDay()
+	assert.Contains(t, buf.String(), "Start of day 1")
+}
+
+// --- RNG injection: determinism ---
+
+// TestGameIsDeterministicWithSameSeed verifies that two Game instances
+// initialised with the same RNG seed and the same writer produce identical
+// output for a runDay call, proving that global rand state is not used.
+func TestGameIsDeterministicWithSameSeed(t *testing.T) {
+	buf1 := &bytes.Buffer{}
+	game1 := newGame(4)
+	game1.writer = buf1
+	game1.dice = newDiceWithSource(rand.NewPCG(42, 0))
+	game1.runDay()
+
+	buf2 := &bytes.Buffer{}
+	game2 := newGame(4)
+	game2.writer = buf2
+	game2.dice = newDiceWithSource(rand.NewPCG(42, 0))
+	game2.runDay()
+
+	assert.Equal(t, buf1.String(), buf2.String(), "games with the same seed must produce identical output")
 }
