@@ -150,7 +150,7 @@ func (g *Game) runActionPhase() { // create interface for phase, move phase into
 		actionRoll := g.dice.roll(100)
 		if actionRoll < 33 {
 			woodGroup = append(woodGroup, player)
-		} else if actionRoll > 33 && actionRoll < 66 {
+		} else if actionRoll >= 33 && actionRoll <= 66 {
 			foodGroup = append(foodGroup, player)
 		} else {
 			campGroup = append(campGroup, player)
@@ -242,7 +242,6 @@ func (g *Game) runCampfirePhase() {
 		}
 	} else {
 		fmt.Println("\tDuring the campfire tonight the group burns", firepower, "logs")
-		firepower = 0
 		g.woodStock -= firepower
 	}
 }

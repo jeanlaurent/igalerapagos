@@ -126,3 +126,57 @@ func TestKillPlayerOn(t *testing.T) {
 	assert.True(t, game.players[2].alive)
 	assert.True(t, game.players[3].alive)
 }
+
+// --- Bug 1: campfire wood consumption ---
+
+// TestCampfireConsumesWoodWhenPlentiful verifies that runCampfirePhase deducts
+// the correct number of logs from woodStock when there is plenty of wood.
+// Before the fix, firepower was zeroed before the subtraction, so wood was
+// never consumed.
+func TestCampfireConsumesWoodWhenPlentiful(t *testing.T) {
+	game := newGame(4)
+	game.woodStock = 100
+	// dice.roll(6) returns 3, so firepower = 3 + 1 = 4
+	game.dice = &DiceStub{[]int{3}, 0}
+	game.runCampfirePhase()
+	assert.Equal(t, 96, game.woodStock) // 100 - 4 logs burned
+	assert.Equal(t, 0, game.campLevel)  // camp untouched when wood is plentiful
+}
+
+// --- Bug 2: action dispatch off-by-one ---
+
+// testActionDispatch is a helper that creates a 1-player game, sets up the
+// dice so the first roll (the action roll) returns actionRoll followed by 5
+// (for the food-gather roll), and then asserts the player was placed in the
+// food bucket (not the camp bucket).
+func testActionDispatch(t *testing.T, actionRoll int) {
+	t.Helper()
+	game := newGame(1)
+	// Use woodStock=100 so any accidental camp routing is clearly visible.
+	game.woodStock = 100
+	game.foodStock = 0
+	game.campLevel = 0
+	// Dice sequence: [actionRoll, 5]
+	// actionRoll is consumed by the per-player dispatch loop.
+	// 5 is consumed by foodGathered = roll(6)+1+bonus+1 when food group fires.
+	game.dice = &DiceStub{[]int{actionRoll, 5}, 0}
+	game.runActionPhase()
+	// Assertions that prove routing went to FOOD, not to CAMP:
+	assert.Equal(t, 100, game.woodStock, "roll %d should not consume wood (not camp)", actionRoll)
+	assert.Equal(t, 0, game.campLevel, "roll %d should not raise campLevel (not camp)", actionRoll)
+	assert.Greater(t, game.foodStock, 0, "roll %d should increase foodStock (food bucket)", actionRoll)
+}
+
+// TestActionPhaseRoll33GoesToFood verifies that a dice roll of exactly 33 is
+// routed to the food bucket. Before the fix the middle condition was
+// `> 33 && < 66`, so 33 fell through to the camp (else) bucket.
+func TestActionPhaseRoll33GoesToFood(t *testing.T) {
+	testActionDispatch(t, 33)
+}
+
+// TestActionPhaseRoll66GoesToFood verifies that a dice roll of exactly 66 is
+// routed to the food bucket. Before the fix the middle condition excluded 66,
+// so it fell through to the camp (else) bucket.
+func TestActionPhaseRoll66GoesToFood(t *testing.T) {
+	testActionDispatch(t, 66)
+}
