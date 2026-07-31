@@ -1,6 +1,6 @@
 package main
 
-import "math/rand"
+import "math/rand/v2"
 
 // Dice allow you to roll dices
 type Dice interface {
@@ -10,5 +10,5 @@ type Dice interface {
 type dice struct{}
 
 func (d *dice) roll(max int) int {
-	return rand.Intn(max)
+	return rand.IntN(max)
 }

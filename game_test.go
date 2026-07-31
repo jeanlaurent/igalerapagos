@@ -87,9 +87,9 @@ func TestIsGameOver(t *testing.T) {
 	assert.True(t, game.isOver())
 }
 
-func TestIsGameOverBySuccesfullEscape(t *testing.T) {
+func TestIsGameOverBySuccessfulEscape(t *testing.T) {
 	game := newGame(12)
-	game.succesfullEscape = true
+	game.successfulEscape = true
 	assert.True(t, game.isOver())
 }
 

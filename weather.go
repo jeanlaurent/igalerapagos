@@ -4,7 +4,7 @@ const sunny = 0
 const cloudy = 1
 const rainy = 2
 const stormy = 3
-const max = 4
+const numWeathers = 4
 
 type weather struct {
 	weather  int
@@ -17,10 +17,10 @@ func (w *weather) changeWeather(d Dice) {
 
 func (w *weather) applyWeatherChange(roll int) {
 	if roll <= 25 {
-		w.weather = (w.weather - 1 + max) % max
+		w.weather = (w.weather - 1 + numWeathers) % numWeathers
 		w.nbOfDays = 0
 	} else if roll >= 75 {
-		w.weather = (w.weather + 1 + max) % max
+		w.weather = (w.weather + 1 + numWeathers) % numWeathers
 		w.nbOfDays = 0
 	} else {
 		w.nbOfDays++

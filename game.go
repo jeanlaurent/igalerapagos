@@ -10,7 +10,7 @@ type Game struct {
 	dayCount         int     // Number of days elapsed since the start
 	weather          weather // Current Weather
 	campLevel        int     // the current camp level
-	succesfullEscape bool    // Did the team successfully escaped the island ?
+	successfulEscape bool    // Did the team successfully escape the island?
 	dice             Dice    // A dice to get random numbers from
 }
 
@@ -44,7 +44,7 @@ func (g *Game) runDay() {
 	fmt.Println()
 	skipActionPhase := g.escapePhase()
 	fmt.Println()
-	if !g.succesfullEscape {
+	if !g.successfulEscape {
 		if !skipActionPhase {
 			g.runActionPhase()
 			fmt.Println()
@@ -81,7 +81,7 @@ func (g *Game) escape() bool {
 	if roll < 10 {
 		g.campLevel -= 20
 		drown := g.killPlayersOn(20)
-		fmt.Println("\tThe raft is crushed almost immediatly on some rocks by huge waves.")
+		fmt.Println("\tThe raft is crushed almost immediately on some rocks by huge waves.")
 		if len(drown) > 0 {
 			fmt.Println("A huge wave fall on the raft", drown.listNames(), "have been thrown into the sea, we will never see them back.")
 		}
@@ -91,15 +91,15 @@ func (g *Game) escape() bool {
 		return false
 	} else if roll < 30 {
 		g.campLevel -= 10
-		fmt.Println("\tAfter some long hours, the raft break apparts.")
+		fmt.Println("\tAfter some long hours, the raft breaks apart.")
 		fmt.Println("\tThe group managed to get back on the origin island with a slightly damaged raft.")
 		fmt.Println("\tWe still have time to get some work done.")
 		return false
 	} else if roll < 40 {
 		drown := g.killPlayersOn(10)
-		fmt.Println("\tAs the group enters open water. A huge wave swipe the raft.")
+		fmt.Println("\tAs the group enters open water. A huge wave sweeps the raft.")
 		if len(drown) > 0 {
-			fmt.Println("\t", drown.listNames(), "have been swiped by the wave, and died.")
+			fmt.Println("\t", drown.listNames(), "have been swept by the wave, and died.")
 		} else {
 			fmt.Println("\tbut everyone survived")
 		}
@@ -112,13 +112,13 @@ func (g *Game) escape() bool {
 			fmt.Println("\tThe passengers waves furiously but they fail to be noticed, and are back at the camp.")
 			fmt.Println("\tThis took so long, that they reach the island by night, and can't work today")
 		} else {
-			fmt.Println("\tThe passengers waves furiously. After an exhausting session of shouting and waving, the boat notice them. The team has been rescued succesfully.")
-			g.succesfullEscape = true
+			fmt.Println("\tThe passengers waves furiously. After an exhausting session of shouting and waving, the boat notice them. The team has been rescued successfully.")
+			g.successfulEscape = true
 		}
 		return true
 	} else {
 		fmt.Println("\tAlmost when all hopes are lost. The group reach another island with some civilization and are saved.")
-		g.succesfullEscape = true
+		g.successfulEscape = true
 		return true
 	}
 
@@ -161,7 +161,7 @@ func (g *Game) runActionPhase() { // create interface for phase, move phase into
 		fmt.Println("\t", starvingGroup.listNames(), "are starving, and are too weak to work on anything.")
 	}
 	if len(woodGroup) > 0 {
-		woodGathered := g.dice.roll(6) + 1 + len(woodGroup) //+ g.woodGatherindBonus()
+		woodGathered := g.dice.roll(6) + 1 + len(woodGroup) //+ g.woodGatheringBonus()
 		if woodGathered < 0 {
 			woodGathered = 0
 		}
@@ -227,7 +227,7 @@ func (g *Game) runLunchPhase() {
 
 func (g *Game) runCampfirePhase() {
 	if len(g.players) == 0 {
-		fmt.Println("\tnoone is alive, so no campfire tonight")
+		fmt.Println("\tNo one is alive, so no campfire tonight")
 		return
 	}
 	firepower := g.dice.roll(6) + 1
@@ -263,7 +263,7 @@ func (g *Game) endPhase() {
 }
 
 func (g *Game) isOver() bool {
-	if g.succesfullEscape {
+	if g.successfulEscape {
 		return true
 	}
 	for _, player := range g.players {
@@ -286,7 +286,7 @@ func newGame(playerCount int) Game {
 	game.woodStock = playerCount / 2
 	game.campLevel = 0
 	game.dayCount = 0
-	game.succesfullEscape = false
+	game.successfulEscape = false
 	game.weather = newWeather()
 	return game
 }

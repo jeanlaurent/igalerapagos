@@ -9,8 +9,8 @@ const starving = 2
 // Player represent a person playing in the game
 type Player struct {
 	name       string // The player name, used as identifier
-	foodStatus int    // Wether this player is fed, hungry or starving
-	alive      bool   // wether this player is dead or not
+	foodStatus int    // Whether this player is fed, hungry or starving
+	alive      bool   // whether this player is dead or not
 }
 
 func (p *Player) lunch(hasLunch bool) {
