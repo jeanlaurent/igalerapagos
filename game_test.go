@@ -2,8 +2,8 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"math/rand/v2"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -35,6 +35,7 @@ func TestDayCountStartAt0(t *testing.T) {
 
 func TestWhenDayPassDayCountProgress(t *testing.T) {
 	game := newGame(12)
+	game.writer = io.Discard
 	game.runDay()
 	assert.Equal(t, 1, game.dayCount)
 	game.runDay()
@@ -45,6 +46,7 @@ func TestWhenDayPassDayCountProgress(t *testing.T) {
 
 func TestWhenDayPassDayFoodGetsDown(t *testing.T) {
 	game := newGame(12)
+	game.writer = io.Discard
 	game.foodStock = 14
 	game.runLunchPhase()
 	assert.Equal(t, 2, game.foodStock)
@@ -52,6 +54,7 @@ func TestWhenDayPassDayFoodGetsDown(t *testing.T) {
 
 func TestWhenFoodStockCantBeNegative(t *testing.T) {
 	game := newGame(12)
+	game.writer = io.Discard
 	game.foodStock = 0
 	game.runLunchPhase()
 	assert.Equal(t, 0, game.foodStock)
@@ -60,6 +63,7 @@ func TestWhenFoodStockCantBeNegative(t *testing.T) {
 func TestEverybodyGotToBeHungry(t *testing.T) {
 	playerCount := 12
 	game := newGame(playerCount)
+	game.writer = io.Discard
 	game.foodStock = 0
 	game.runLunchPhase()
 	for _, player := range game.players {
@@ -138,6 +142,7 @@ func TestKillPlayerOn(t *testing.T) {
 // never consumed.
 func TestCampfireConsumesWoodWhenPlentiful(t *testing.T) {
 	game := newGame(4)
+	game.writer = io.Discard
 	game.woodStock = 100
 	// dice.roll(6) returns 3, so firepower = 3 + 1 = 4
 	game.dice = &DiceStub{[]int{3}, 0}
@@ -155,6 +160,7 @@ func TestCampfireConsumesWoodWhenPlentiful(t *testing.T) {
 func testActionDispatch(t *testing.T, actionRoll int) {
 	t.Helper()
 	game := newGame(1)
+	game.writer = io.Discard
 	// Use woodStock=100 so any accidental camp routing is clearly visible.
 	game.woodStock = 100
 	game.foodStock = 0
@@ -195,7 +201,7 @@ func TestGameOutputContainsDayHeader(t *testing.T) {
 	game.writer = buf
 	game.dice = newDiceWithSource(rand.NewPCG(1, 0))
 	game.runDay()
-	assert.True(t, strings.Contains(buf.String(), "Start of day 1"), "expected output to contain 'Start of day 1', got: %q", buf.String())
+	assert.Contains(t, buf.String(), "Start of day 1")
 }
 
 // --- RNG injection: determinism ---

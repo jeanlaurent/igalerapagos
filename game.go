@@ -281,9 +281,11 @@ func (g *Game) isOver() bool {
 
 func newGame(playerCount int) Game {
 	initialPlayers := newPlayers()
-	game := Game{players: initialPlayers}
-	game.dice = newDice()
-	game.writer = os.Stdout
+	game := Game{
+		players: initialPlayers,
+		dice:    newDice(),
+		writer:  os.Stdout,
+	}
 	for i := 0; i < playerCount; i++ {
 		newplayer := newPlayer(i)
 		game.players = append(game.players, &newplayer)

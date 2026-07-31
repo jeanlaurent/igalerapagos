@@ -52,6 +52,8 @@ func TestWeatherString(t *testing.T) {
 	assert.Equal(t, "stormy", weather.state.String())
 	weather.state = -1
 	assert.Equal(t, "unknown", weather.state.String())
+	weather.state = numWeathers
+	assert.Equal(t, "unknown", weather.state.String())
 }
 
 func TestStormyWeatherHinderFoodGathering(t *testing.T) {
