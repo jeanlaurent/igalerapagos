@@ -13,7 +13,7 @@ func main() {
 	for !game.isOver() {
 		game.runDay()
 		fmt.Print("Press any key to continue")
-		reader.ReadString('\n') //nolint:errcheck
+		_, _ = reader.ReadString('\n')
 	}
 	if game.successfulEscape {
 		fmt.Println("You win, you manage to save", len(game.players), "persons in ", game.dayCount, "days.")
