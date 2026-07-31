@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"math/rand/v2"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -179,4 +182,39 @@ func TestActionPhaseRoll33GoesToFood(t *testing.T) {
 // so it fell through to the camp (else) bucket.
 func TestActionPhaseRoll66GoesToFood(t *testing.T) {
 	testActionDispatch(t, 66)
+}
+
+// --- io.Writer: output assertion ---
+
+// TestGameOutputContainsDayHeader verifies that game output is routed through
+// the injected io.Writer: running runDay should produce a line beginning with
+// "Start of day 1".
+func TestGameOutputContainsDayHeader(t *testing.T) {
+	buf := &bytes.Buffer{}
+	game := newGame(4)
+	game.writer = buf
+	game.dice = newDiceWithSource(rand.NewPCG(1, 0))
+	game.runDay()
+	assert.True(t, strings.Contains(buf.String(), "Start of day 1"), "expected output to contain 'Start of day 1', got: %q", buf.String())
+}
+
+// --- RNG injection: determinism ---
+
+// TestGameIsDeterministicWithSameSeed verifies that two Game instances
+// initialised with the same RNG seed and the same writer produce identical
+// output for a runDay call, proving that global rand state is not used.
+func TestGameIsDeterministicWithSameSeed(t *testing.T) {
+	buf1 := &bytes.Buffer{}
+	game1 := newGame(4)
+	game1.writer = buf1
+	game1.dice = newDiceWithSource(rand.NewPCG(42, 0))
+	game1.runDay()
+
+	buf2 := &bytes.Buffer{}
+	game2 := newGame(4)
+	game2.writer = buf2
+	game2.dice = newDiceWithSource(rand.NewPCG(42, 0))
+	game2.runDay()
+
+	assert.Equal(t, buf1.String(), buf2.String(), "games with the same seed must produce identical output")
 }

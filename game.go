@@ -1,17 +1,22 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"io"
+	"os"
+)
 
 // Game hold the game data context
 type Game struct {
-	players          Players // All alive players current status
-	foodStock        int     // The food stock level
-	woodStock        int     // The wood stock
-	dayCount         int     // Number of days elapsed since the start
-	weather          weather // Current Weather
-	campLevel        int     // the current camp level
-	successfulEscape bool    // Did the team successfully escape the island?
-	dice             Dice    // A dice to get random numbers from
+	players          Players   // All alive players current status
+	foodStock        int       // The food stock level
+	woodStock        int       // The wood stock
+	dayCount         int       // Number of days elapsed since the start
+	weather          weather   // Current Weather
+	campLevel        int       // the current camp level
+	successfulEscape bool      // Did the team successfully escape the island?
+	dice             Dice      // A dice to get random numbers from
+	writer           io.Writer // Destination for all game output
 }
 
 func (g *Game) findXPlayers(max int) Players {
@@ -41,27 +46,27 @@ func (g *Game) decrementFood() int {
 
 func (g *Game) runDay() {
 	g.startPhase()
-	fmt.Println()
+	fmt.Fprintln(g.writer)
 	skipActionPhase := g.escapePhase()
-	fmt.Println()
+	fmt.Fprintln(g.writer)
 	if !g.successfulEscape {
 		if !skipActionPhase {
 			g.runActionPhase()
-			fmt.Println()
+			fmt.Fprintln(g.writer)
 		}
 		g.runLunchPhase()
-		fmt.Println()
+		fmt.Fprintln(g.writer)
 		g.runCampfirePhase()
-		fmt.Println()
+		fmt.Fprintln(g.writer)
 	}
 	g.endPhase()
 }
 
 func (g *Game) startPhase() {
 	g.dayCount++
-	fmt.Println("Start of day", g.dayCount, ".")
+	fmt.Fprintln(g.writer, "Start of day", g.dayCount, ".")
 	g.weather.changeWeather(g.dice)
-	fmt.Println("\tIt is going to be a", g.weather.weatherAsString(), "day.")
+	fmt.Fprintln(g.writer, "\tIt is going to be a", g.weather.state, "day.")
 }
 
 func (g *Game) escapePhase() bool {
@@ -69,10 +74,10 @@ func (g *Game) escapePhase() bool {
 		return false
 	}
 	if g.dice.roll(100)+g.campLevel < 50 {
-		fmt.Println("\tThe group decide that even if the raft is ready, the condition for escaping are not met.")
+		fmt.Fprintln(g.writer, "\tThe group decide that even if the raft is ready, the condition for escaping are not met.")
 		return false
 	}
-	fmt.Println("\tThe group decide to try to use the raft and escape the island.")
+	fmt.Fprintln(g.writer, "\tThe group decide to try to use the raft and escape the island.")
 	return g.escape()
 }
 
@@ -81,43 +86,43 @@ func (g *Game) escape() bool {
 	if roll < 10 {
 		g.campLevel -= 20
 		drown := g.killPlayersOn(20)
-		fmt.Println("\tThe raft is crushed almost immediately on some rocks by huge waves.")
+		fmt.Fprintln(g.writer, "\tThe raft is crushed almost immediately on some rocks by huge waves.")
 		if len(drown) > 0 {
-			fmt.Println("A huge wave fall on the raft", drown.listNames(), "have been thrown into the sea, we will never see them back.")
+			fmt.Fprintln(g.writer, "A huge wave fall on the raft", drown.listNames(), "have been thrown into the sea, we will never see them back.")
 		}
-		fmt.Println("\tThe group is back to the island with a rather broken raft.")
-		fmt.Println("\tWe still have time to get some work done.")
+		fmt.Fprintln(g.writer, "\tThe group is back to the island with a rather broken raft.")
+		fmt.Fprintln(g.writer, "\tWe still have time to get some work done.")
 		g.removeDeadPlayers()
 		return false
 	} else if roll < 30 {
 		g.campLevel -= 10
-		fmt.Println("\tAfter some long hours, the raft breaks apart.")
-		fmt.Println("\tThe group managed to get back on the origin island with a slightly damaged raft.")
-		fmt.Println("\tWe still have time to get some work done.")
+		fmt.Fprintln(g.writer, "\tAfter some long hours, the raft breaks apart.")
+		fmt.Fprintln(g.writer, "\tThe group managed to get back on the origin island with a slightly damaged raft.")
+		fmt.Fprintln(g.writer, "\tWe still have time to get some work done.")
 		return false
 	} else if roll < 40 {
 		drown := g.killPlayersOn(10)
-		fmt.Println("\tAs the group enters open water. A huge wave sweeps the raft.")
+		fmt.Fprintln(g.writer, "\tAs the group enters open water. A huge wave sweeps the raft.")
 		if len(drown) > 0 {
-			fmt.Println("\t", drown.listNames(), "have been swept by the wave, and died.")
+			fmt.Fprintln(g.writer, "\t", drown.listNames(), "have been swept by the wave, and died.")
 		} else {
-			fmt.Println("\tbut everyone survived")
+			fmt.Fprintln(g.writer, "\tbut everyone survived")
 		}
 		g.removeDeadPlayers()
 		return g.escape()
 	} else if roll < 50 {
-		fmt.Println("\tThe raft is within range of a rescue ship.")
+		fmt.Fprintln(g.writer, "\tThe raft is within range of a rescue ship.")
 		roll = g.dice.roll(100)
 		if roll < 30 {
-			fmt.Println("\tThe passengers waves furiously but they fail to be noticed, and are back at the camp.")
-			fmt.Println("\tThis took so long, that they reach the island by night, and can't work today")
+			fmt.Fprintln(g.writer, "\tThe passengers waves furiously but they fail to be noticed, and are back at the camp.")
+			fmt.Fprintln(g.writer, "\tThis took so long, that they reach the island by night, and can't work today")
 		} else {
-			fmt.Println("\tThe passengers waves furiously. After an exhausting session of shouting and waving, the boat notice them. The team has been rescued successfully.")
+			fmt.Fprintln(g.writer, "\tThe passengers waves furiously. After an exhausting session of shouting and waving, the boat notice them. The team has been rescued successfully.")
 			g.successfulEscape = true
 		}
 		return true
 	} else {
-		fmt.Println("\tAlmost when all hopes are lost. The group reach another island with some civilization and are saved.")
+		fmt.Fprintln(g.writer, "\tAlmost when all hopes are lost. The group reach another island with some civilization and are saved.")
 		g.successfulEscape = true
 		return true
 	}
@@ -158,7 +163,7 @@ func (g *Game) runActionPhase() { // create interface for phase, move phase into
 	}
 	// Perform actions
 	if len(starvingGroup) > 0 {
-		fmt.Println("\t", starvingGroup.listNames(), "are starving, and are too weak to work on anything.")
+		fmt.Fprintln(g.writer, "\t", starvingGroup.listNames(), "are starving, and are too weak to work on anything.")
 	}
 	if len(woodGroup) > 0 {
 		woodGathered := g.dice.roll(6) + 1 + len(woodGroup) //+ g.woodGatheringBonus()
@@ -166,9 +171,9 @@ func (g *Game) runActionPhase() { // create interface for phase, move phase into
 			woodGathered = 0
 		}
 		g.woodStock += woodGathered
-		fmt.Println("\t", "A group made of", woodGroup.listNames(), "gathered", woodGathered, "wood pieces.")
+		fmt.Fprintln(g.writer, "\t", "A group made of", woodGroup.listNames(), "gathered", woodGathered, "wood pieces.")
 	} else {
-		fmt.Println("\t", "No one wanted to pickup wood today.")
+		fmt.Fprintln(g.writer, "\t", "No one wanted to pickup wood today.")
 	}
 	if len(foodGroup) > 0 {
 		foodGathered := g.dice.roll(6) + 1 + g.weather.foodGatheringBonus() + len(foodGroup)
@@ -176,9 +181,9 @@ func (g *Game) runActionPhase() { // create interface for phase, move phase into
 			foodGathered = 0
 		}
 		g.foodStock += foodGathered
-		fmt.Println("\t", "A group made of", foodGroup.listNames(), "gathered", foodGathered, "fruits and other food.")
+		fmt.Fprintln(g.writer, "\t", "A group made of", foodGroup.listNames(), "gathered", foodGathered, "fruits and other food.")
 	} else {
-		fmt.Println("\t", "No one wanted to pickup food today.")
+		fmt.Fprintln(g.writer, "\t", "No one wanted to pickup food today.")
 	}
 	if len(campGroup) > 0 {
 		campImprovement := g.dice.roll(6) + 1 + len(campGroup)
@@ -187,9 +192,9 @@ func (g *Game) runActionPhase() { // create interface for phase, move phase into
 		}
 		g.woodStock -= campImprovement
 		g.campLevel += campImprovement
-		fmt.Println("\t", "A group made of", campGroup.listNames(), "worked the camp they raised the camp level to", g.campLevel, ". They used wood for that, there are", g.woodStock, "wood left")
+		fmt.Fprintln(g.writer, "\t", "A group made of", campGroup.listNames(), "worked the camp they raised the camp level to", g.campLevel, ". They used wood for that, there are", g.woodStock, "wood left")
 	} else {
-		fmt.Println("\t", "No one wanted to work the camp today.")
+		fmt.Fprintln(g.writer, "\t", "No one wanted to work the camp today.")
 	}
 }
 
@@ -212,14 +217,14 @@ func (g *Game) runLunchPhase() {
 		}
 	}
 	if len(playerMissingLunch) == 0 {
-		fmt.Println("\t", "Everybody ate some food today.")
+		fmt.Fprintln(g.writer, "\t", "Everybody ate some food today.")
 	} else {
 		if len(playerEatingLunch) > 0 {
-			fmt.Println("\t", playerEatingLunch.listNames(), "managed to get some food.")
+			fmt.Fprintln(g.writer, "\t", playerEatingLunch.listNames(), "managed to get some food.")
 		}
-		fmt.Println("\t", playerMissingLunch.listNames(), "did not eat tonight")
+		fmt.Fprintln(g.writer, "\t", playerMissingLunch.listNames(), "did not eat tonight")
 		if len(playerDiedOfHunger) > 0 {
-			fmt.Println("\t", playerDiedOfHunger.listNames(), "died of hunger")
+			fmt.Fprintln(g.writer, "\t", playerDiedOfHunger.listNames(), "died of hunger")
 		}
 	}
 	g.removeDeadPlayers()
@@ -227,21 +232,21 @@ func (g *Game) runLunchPhase() {
 
 func (g *Game) runCampfirePhase() {
 	if len(g.players) == 0 {
-		fmt.Println("\tNo one is alive, so no campfire tonight")
+		fmt.Fprintln(g.writer, "\tNo one is alive, so no campfire tonight")
 		return
 	}
 	firepower := g.dice.roll(6) + 1
 	if g.woodStock < firepower {
-		fmt.Println("\tDuring the campfire tonight the group start to burn some", g.woodStock, "logs")
+		fmt.Fprintln(g.writer, "\tDuring the campfire tonight the group start to burn some", g.woodStock, "logs")
 		firepower -= g.woodStock
 		g.woodStock = 0
 		g.campLevel -= firepower
-		fmt.Println("\tSince they were not enough logs to keep the fire burning, we broke part of the camp.")
+		fmt.Fprintln(g.writer, "\tSince they were not enough logs to keep the fire burning, we broke part of the camp.")
 		if g.campLevel < 0 {
 			g.campLevel = 0
 		}
 	} else {
-		fmt.Println("\tDuring the campfire tonight the group burns", firepower, "logs")
+		fmt.Fprintln(g.writer, "\tDuring the campfire tonight the group burns", firepower, "logs")
 		g.woodStock -= firepower
 	}
 }
@@ -257,9 +262,9 @@ func (g *Game) removeDeadPlayers() {
 }
 
 func (g *Game) endPhase() {
-	fmt.Println("At the end of day", g.dayCount, "there are", len(g.players), "persons alive.", g.foodStock, "meals are left, we got ", g.woodStock, "wood log left. The camp level is at", g.campLevel)
-	fmt.Println()
-	fmt.Println("====================")
+	fmt.Fprintln(g.writer, "At the end of day", g.dayCount, "there are", len(g.players), "persons alive.", g.foodStock, "meals are left, we got ", g.woodStock, "wood log left. The camp level is at", g.campLevel)
+	fmt.Fprintln(g.writer)
+	fmt.Fprintln(g.writer, "====================")
 }
 
 func (g *Game) isOver() bool {
@@ -277,7 +282,8 @@ func (g *Game) isOver() bool {
 func newGame(playerCount int) Game {
 	initialPlayers := newPlayers()
 	game := Game{players: initialPlayers}
-	game.dice = &dice{}
+	game.dice = newDice()
+	game.writer = os.Stdout
 	for i := 0; i < playerCount; i++ {
 		newplayer := newPlayer(i)
 		game.players = append(game.players, &newplayer)
